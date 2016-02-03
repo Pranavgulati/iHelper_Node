@@ -35,7 +35,7 @@ schedules
 #define NUMRELAY 2
 #define RELAYstart 12// gpio pin no from which relay is connected
 #define MY_PWD "passphrase"
-#define MY_PREFIX "iHelp_"
+#define MY_PREFIX "iHelp"
 #define Hkeypart 4
 #define SERVER_IP_ADDR "192.168.4.1"
 #define SERVER_PORT 2123
@@ -191,7 +191,7 @@ String sendGET(const char url[], int port, const char path[], int length){
 	String temp;
 	temp.reserve(120);
 	WiFiClient client;
-	delay(1000);
+	
 	//	if (client.connect(IPAddress(192,168,4,1), port)){
 	if (client.connect(url, port)){
 		client.print("GET ");
@@ -211,7 +211,7 @@ String sendGET(const char url[], int port, const char path[], int length){
 	while (client.available()){
 		temp += (char)client.read();
 	}
-	Serial.println("\n");
+	
 	recv = temp.substring(temp.indexOf("@"), temp.lastIndexOf("@") + 1);
 	//// Attempt to make a connection to the remote server
 	//if (client.connect("192.168.4.1", 80)) {
@@ -239,7 +239,7 @@ String sendGET(const char url[], int port, const char path[], int length){
 	//	
 	//	recv = temp.substring(temp.indexOf("@"), temp.lastIndexOf("@") + 1);
 	//
-	Serial.printf("%s \n %d \n %s \n", url, port, path);
+	//Serial.printf("%s \n %d \n %s \n", url, port, path);
 	/*if (httpCode == 200) {
 	String temp= http.getString();
 	Serial.println(temp);
@@ -248,7 +248,7 @@ String sendGET(const char url[], int port, const char path[], int length){
 	else {
 	recv = ERROR1;
 	}*/
-	Serial.println(recv);
+	//Serial.println(recv);
 	client.stop();
 	return recv;
 }
@@ -798,9 +798,7 @@ void loop() {
 			if (recv != ERROR1 && recv.indexOf("@") != -1){
 				//Serial.println(recv);
 				//please check for relevant error codes
-				Command cmd(recv);
-				cmd.separate(Hkey);
-			}
+				}
 			requestCounter = 0;
 		}
 		else if (requestCounter < totalQuery){
@@ -819,13 +817,13 @@ void loop() {
 					//please check for relevant error codes
 					//valid response 
 					connection = INTERNET;
-					editQuery(currentQuery->HID, recv.c_str(), currentQuery->ques);
+					removeQuery();
 				}
 			}
 		}
 		else { requestCounter = 0; }
 	}
-	delay(1000);
+	delay(500);
 
 
 }
