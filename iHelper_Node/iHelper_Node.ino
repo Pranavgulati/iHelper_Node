@@ -149,9 +149,8 @@ String isQuery(const char hid[], const char ques[]){
 	move2start();
 	while (1){
 		if (currentQuery->next != NULL){
-			if (ets_strcmp(currentQuery->HID, hid) != 0 ){
+			if (ets_strcmp(currentQuery->HID, hid) != 0 || ets_strcmp(currentQuery->ques, ques) != 0){
 				currentQuery = currentQuery->next;
-
 			}
 			else{
 				if ((String)currentQuery->response != (String)(Server_WaitResponse + (String)currentQuery->HID + "@")) { return currentQuery->response; }
@@ -159,7 +158,7 @@ String isQuery(const char hid[], const char ques[]){
 			}
 		}
 		else {
-			if (ets_strcmp(currentQuery->HID, hid) == 0 ){
+			if (ets_strcmp(currentQuery->HID, hid) == 0 && ets_strcmp(currentQuery->ques, ques) == 0){
 				Serial.print(currentQuery->HID);
 				Serial.print(currentQuery->response);
 				if ((String)currentQuery->response != (String)(Server_WaitResponse + (String)currentQuery->HID + "@")){ return currentQuery->response; }
