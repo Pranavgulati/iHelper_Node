@@ -35,7 +35,7 @@ schedules
 #define NUMRELAY 2
 #define RELAYstart 12// gpio pin no from which relay is connected
 #define MY_PWD "passphrase"
-#define MY_PREFIX "TPS_"
+#define MY_PREFIX "iHelp_"
 #define Hkeypart 4
 #define SERVER_IP_ADDR "192.168.4.1"
 #define SERVER_PORT 2123
@@ -521,7 +521,7 @@ void configuration()
 	if (key == Hkey){
 		Ukey = server.arg("Ukey");
 		for (byte i = 0; i < Ukeylen; i++){ EEPROM.write(IDend + i, Ukey[i]); }
-		WiFi.disconnect(true);
+		WiFi.disconnect();
 		WiFi.begin(ssid.c_str(), password.c_str());
 		if (WiFi.waitForConnectResult() == WL_CONNECTED){
 
@@ -733,14 +733,15 @@ void setup() {
 	Serial.println(ssid.c_str());
 	Serial.println(password.c_str());
 	WiFi.begin(ssid.c_str(), password.c_str());
-	server.on("/command", HTTP_GET, command);
+	//server.on("/command", HTTP_GET, command);
 	server.on("/config", HTTP_GET, configuration);
 	server.on("/mesh", HTTP_GET, manageMesh);
-	server.on("/connect", HTTP_GET, connectNode);
+	//server.on("/connect", HTTP_GET, connectNode);
 	server.begin();
 	for (uint8_t t = 5; t > 0; t--) {
 		USE_SERIAL.printf("SETUP connecting to router %d...\n", t);
 		USE_SERIAL.flush();
+	
 		delay(1000);
 	}
 	if (WiFi.waitForConnectResult() == WL_CONNECTED){
@@ -748,7 +749,6 @@ void setup() {
 		else{ connection = TO_ROUTER; }
 		Serial.println(WiFi.localIP());
 	}
-
 }
 
 /*String getData() {
@@ -763,15 +763,16 @@ void loop() {
 	Serial.printf("%d <- conn wifi->%d", connection, WiFi.status());
 	//Serial.printf("%d <- wifi status \n", WiFi.status());
 	//please call checkschedule every minute or so
-	if (millis() - timers > 6000){
-		checkSchedule(getDS3231hour(), getDS3231minute(), 1);
-		checkSchedule(getDS3231hour(), getDS3231minute(), 0);
-		timers = millis();
-	}
+
 	if (WiFi.status() != WL_CONNECTED){
-		WiFi.begin(ssid.c_str(), password.c_str()); //loaded from the eeprom 
-		delay(5000);
-		if (WiFi.status() == WL_DISCONNECTED){ if (connectTomeshAP(60)){ connection = TO_MESH; } }
+		//WiFi.begin(ssid.c_str(), password.c_str()); //loaded from the eeprom 
+		for (uint8_t t = 5; t > 0; t--) {
+			USE_SERIAL.printf("SETUP connecting to router %d...\n", t);
+			USE_SERIAL.flush();
+			server.handleClient();
+			delay(1000);
+		}
+		//if (WiFi.status() == WL_DISCONNECTED){ if (connectTomeshAP(60)){ connection = TO_MESH; } }
 
 	}
 	if ((WiFi.status() == WL_CONNECTED) && (connection == TO_ROUTER || connection == INTERNET)) {
@@ -813,55 +814,11 @@ void loop() {
 					connection = INTERNET;
 					editQuery(currentQuery->HID, recv.c_str(), currentQuery->ques);
 				}
-
 			}
 		}
 		else { requestCounter = 0; }
 	}
-	else if (WiFi.status() == WL_CONNECTED && connection == TO_MESH){
-		WiFi.mode(WIFI_STA);
-		delay(100);
-		//PROCESS TABLE REQUESTS HERE from mesh basically forward your requests
-		if (requestCounter == totalQuery){
-			//run my request
-			//String path = SERVER_IP_ADDR;
-			String path;
-			//			path += ":";
-			//			path += SERVER_PORT;
-			path += "/mesh?Hof=";
-			path += Hkey;
-			path += "&ques="; //this contains the relay status
-			path += "command";//this could be sensor values and other stuff
-			String recv = sendGET(SERVER_IP_ADDR, SERVER_PORT, path.c_str(), path.length());
-			if (recv != (String)(Server_WaitResponse + (String)currentQuery->HID + "@") && recv != ERROR1){
-				//please check for relevant error codes
-				Command cmd(recv);
-				cmd.separate(Hkey);
-			}
-			requestCounter = 0;
-		}
-
-		else if (requestCounter < totalQuery){
-			move2query(++requestCounter);
-			if ((String)currentQuery->response == (String)(Server_WaitResponse + (String)currentQuery->HID + "@")){
-				String path = "/mesh?Hof=";
-				path += currentQuery->HID;
-				path += "&ques="; //this contains the relay status
-				path += currentQuery->ques;
-				String recv = sendGET(SERVER_IP_ADDR, SERVER_PORT, path.c_str(), path.length());
-				Serial.println(recv);
-				if (recv != (String)(Server_WaitResponse + (String)currentQuery->HID + "@") && recv != ERROR1){
-					editQuery(currentQuery->HID, recv.c_str(), currentQuery->ques);
-				}
-				else {
-					//wait response by server, do nothing just skip this query and retry later
-				}
-			}
-		}
-		WiFi.disconnect();
-		WiFi.mode(WIFI_AP_STA);
-		delay(1000);
-	}
+	delay(1000);
 
 
 }
