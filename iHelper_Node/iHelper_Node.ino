@@ -151,6 +151,7 @@ String isQuery(const char hid[], const char ques[]){
 		if (currentQuery->next != NULL){
 			if (ets_strcmp(currentQuery->HID, hid) != 0 ){
 				currentQuery = currentQuery->next;
+
 			}
 			else{
 				if ((String)currentQuery->response != (String)(Server_WaitResponse + (String)currentQuery->HID + "@")) { return currentQuery->response; }
