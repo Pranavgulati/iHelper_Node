@@ -149,7 +149,7 @@ String isQuery(const char hid[], const char ques[]){
 	move2start();
 	while (1){
 		if (currentQuery->next != NULL){
-			if (ets_strcmp(currentQuery->HID, hid) != 0 || ets_strcmp(currentQuery->ques, ques) != 0){
+			if (ets_strcmp(currentQuery->HID, hid) != 0 ){
 				currentQuery = currentQuery->next;
 			}
 			else{
@@ -158,7 +158,7 @@ String isQuery(const char hid[], const char ques[]){
 			}
 		}
 		else {
-			if (ets_strcmp(currentQuery->HID, hid) == 0 && ets_strcmp(currentQuery->ques, ques) == 0){
+			if (ets_strcmp(currentQuery->HID, hid) == 0 ){
 				Serial.print(currentQuery->HID);
 				Serial.print(currentQuery->response);
 				if ((String)currentQuery->response != (String)(Server_WaitResponse + (String)currentQuery->HID + "@")){ return currentQuery->response; }
@@ -562,8 +562,8 @@ void command() {
 
 void manageMesh(){
 	String Hof = server.arg("Hof");
-	String question = server.arg("ques");
-	Serial.printf("hof=%s ques=%s\n", Hof.c_str(), question.c_str());
+	String question = server.arg("state");
+	Serial.printf("hof=%s state=%s\n", Hof.c_str(), question.c_str());
 
 	String state = isQuery(Hof.c_str(), question.c_str());
 	if (state == "2"){
@@ -725,7 +725,7 @@ void setup() {
 		Serial.printf("%d -> %c \n", i, (char)EEPROM.read(i));
 	}
 
-	USE_SERIAL.setDebugOutput(true);
+	//USE_SERIAL.setDebugOutput(true);
 	WiFi.softAP(((String)MY_PREFIX + Hkey.substring(0, Hkeypart)).c_str(), ((String)MY_PWD).c_str());
 	WiFi.mode(WIFI_AP_STA);
 	Serial.println(Hkey.c_str());
@@ -772,12 +772,19 @@ void loop() {
 			server.handleClient();
 			delay(1000);
 		}
+	
 		//if (WiFi.status() == WL_DISCONNECTED){ if (connectTomeshAP(60)){ connection = TO_MESH; } }
 
 	}
+	else{
+		if (WiFi.SSID().indexOf(MY_PREFIX) == 0 && password.compareTo(MY_PWD) == 0){ connection = TO_MESH; }
+		else{ connection = TO_ROUTER; }
+	}
+
 	if ((WiFi.status() == WL_CONNECTED) && (connection == TO_ROUTER || connection == INTERNET)) {
 		//for now it is assumed the data is only relay status
 		delay(500);
+		
 		//PROCESS TABLE REQUESTS HERE from internet
 		if (requestCounter == totalQuery){
 			//run my request
